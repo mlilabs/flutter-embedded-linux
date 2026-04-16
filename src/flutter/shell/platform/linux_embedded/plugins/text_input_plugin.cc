@@ -50,6 +50,10 @@ constexpr char kSelectionBaseKey[] = "selectionBase";
 constexpr char kSelectionExtentKey[] = "selectionExtent";
 constexpr char kSelectionIsDirectionalKey[] = "selectionIsDirectional";
 constexpr char kTextKey[] = "text";
+constexpr char kObscureTextKey[] = "obscureText";
+constexpr char kAutocorrectKey[] = "autocorrect";
+constexpr char kEnableSuggestionsKey[] = "enableSuggestions";
+constexpr char kTextCapitalizationKey[] = "textCapitalization";
 
 constexpr char kBadArgumentError[] = "Bad Arguments";
 constexpr char kInternalConsistencyError[] = "Internal Consistency Error";
@@ -117,7 +121,13 @@ void TextInputPlugin::HandleMethodCall(
   const std::string& method = method_call.method_name();
 
   if (method.compare(kShowMethod) == 0) {
-    delegate_->UpdateVirtualKeyboardStatus(true);
+    TextInputTypeInfo info;
+    info.input_type = input_type_;
+    info.obscure_text = obscure_text_;
+    info.autocorrect = autocorrect_;
+    info.enable_suggestions = enable_suggestions_;
+    info.text_capitalization = text_capitalization_;
+    delegate_->UpdateVirtualKeyboardStatus(true, info);
   } else if (method.compare(kHideMethod) == 0) {
     delegate_->UpdateVirtualKeyboardStatus(false);
   } else if (method.compare(kClearClientMethod) == 0) {
@@ -159,6 +169,32 @@ void TextInputPlugin::HandleMethodCall(
           input_type_json->value.IsString()) {
         input_type_ = input_type_json->value.GetString();
       }
+    }
+    obscure_text_ = false;
+    auto obscure_text_json = client_config.FindMember(kObscureTextKey);
+    if (obscure_text_json != client_config.MemberEnd() &&
+        obscure_text_json->value.IsBool()) {
+      obscure_text_ = obscure_text_json->value.GetBool();
+    }
+    autocorrect_ = true;
+    auto autocorrect_json = client_config.FindMember(kAutocorrectKey);
+    if (autocorrect_json != client_config.MemberEnd() &&
+        autocorrect_json->value.IsBool()) {
+      autocorrect_ = autocorrect_json->value.GetBool();
+    }
+    enable_suggestions_ = true;
+    auto enable_suggestions_json =
+        client_config.FindMember(kEnableSuggestionsKey);
+    if (enable_suggestions_json != client_config.MemberEnd() &&
+        enable_suggestions_json->value.IsBool()) {
+      enable_suggestions_ = enable_suggestions_json->value.GetBool();
+    }
+    text_capitalization_ = "";
+    auto text_capitalization_json =
+        client_config.FindMember(kTextCapitalizationKey);
+    if (text_capitalization_json != client_config.MemberEnd() &&
+        text_capitalization_json->value.IsString()) {
+      text_capitalization_ = text_capitalization_json->value.GetString();
     }
     active_model_ = std::make_unique<TextInputModel>();
   } else if (method.compare(kSetEditingStateMethod) == 0) {

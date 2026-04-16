@@ -55,7 +55,9 @@ class ELinuxWindowX11 : public ELinuxWindow, public WindowBindingHandler {
   void UpdateFlutterCursor(const std::string& cursor_name) override;
 
   // |FlutterWindowBindingHandler|
-  void UpdateVirtualKeyboardStatus(const bool show) override;
+  void UpdateVirtualKeyboardStatus(
+      const bool show,
+      const TextInputTypeInfo& input_type_info = TextInputTypeInfo()) override;
 
   // |FlutterWindowBindingHandler|
   std::string GetClipboardData() override;

@@ -48,6 +48,19 @@ class TextInputPlugin {
   // https://docs.flutter.io/flutter/services/TextInputType-class.html
   std::string input_type_;
 
+  // Whether the text field obscures its content (e.g. password).
+  bool obscure_text_ = false;
+
+  // Whether autocorrect is enabled.
+  bool autocorrect_ = true;
+
+  // Whether input suggestions are enabled.
+  bool enable_suggestions_ = true;
+
+  // Text capitalization mode. See available options:
+  // https://api.flutter.dev/flutter/services/TextCapitalization.html
+  std::string text_capitalization_;
+
   // An action requested by the user on the input client. See available options:
   // https://docs.flutter.io/flutter/services/TextInputAction-class.html
   std::string input_action_;

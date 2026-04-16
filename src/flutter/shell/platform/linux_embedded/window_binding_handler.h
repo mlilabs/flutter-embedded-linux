@@ -22,6 +22,15 @@ struct PhysicalWindowBounds {
   size_t height;
 };
 
+// Structure containing text input type information from Flutter.
+struct TextInputTypeInfo {
+  std::string input_type;           // e.g. "TextInputType.text"
+  bool obscure_text = false;
+  bool autocorrect = true;
+  bool enable_suggestions = true;
+  std::string text_capitalization;  // e.g. "TextCapitalization.sentences"
+};
+
 using ELinuxRenderSurfaceTarget = SurfaceGl;
 
 // Abstract class for binding Linux embedded platform windows to Flutter views.
@@ -70,7 +79,9 @@ class WindowBindingHandler {
 
   // Sets the virtual keyboard status when the virtual keyboard needs to be
   // shown by Flutter events.
-  virtual void UpdateVirtualKeyboardStatus(const bool show) = 0;
+  virtual void UpdateVirtualKeyboardStatus(
+      const bool show,
+      const TextInputTypeInfo& input_type_info = TextInputTypeInfo()) = 0;
 
   // Returns the clipboard data.
   virtual std::string GetClipboardData() = 0;

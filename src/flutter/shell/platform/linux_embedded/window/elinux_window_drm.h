@@ -249,7 +249,9 @@ class ELinuxWindowDrm : public ELinuxWindow, public WindowBindingHandler {
   }
 
   // |FlutterWindowBindingHandler|
-  void UpdateVirtualKeyboardStatus(const bool show) override {
+  void UpdateVirtualKeyboardStatus(
+      const bool show,
+      const TextInputTypeInfo& input_type_info = TextInputTypeInfo()) override {
     // currently not supported.
   }
 

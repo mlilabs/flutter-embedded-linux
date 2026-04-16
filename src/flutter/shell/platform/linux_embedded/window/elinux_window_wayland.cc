@@ -1505,12 +1505,15 @@ void ELinuxWindowWayland::DestroyRenderSurface() {
   }
 }
 
-void ELinuxWindowWayland::UpdateVirtualKeyboardStatus(const bool show) {
+void ELinuxWindowWayland::UpdateVirtualKeyboardStatus(
+    const bool show,
+    const TextInputTypeInfo& input_type_info) {
   // Not supported virtual keyboard.
   if (!(zwp_text_input_v1_ || zwp_text_input_v3_) || seat_inputs_map_.empty()) {
     return;
   }
 
+  input_type_info_ = input_type_info;
   is_requested_show_virtual_keyboard_ = show;
   if (is_requested_show_virtual_keyboard_) {
     ShowVirtualKeyboard();
@@ -1869,18 +1872,124 @@ void ELinuxWindowWayland::ShowVirtualKeyboard() {
     zwp_text_input_v3_enable(zwp_text_input_v3_);
     zwp_text_input_v3_commit(zwp_text_input_v3_);
 
-    zwp_text_input_v3_set_content_type(
-        zwp_text_input_v3_, ZWP_TEXT_INPUT_V3_CONTENT_HINT_NONE,
-        ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_TERMINAL);
+    zwp_text_input_v3_set_content_type(zwp_text_input_v3_,
+                                       GetWaylandContentHintV3(),
+                                       GetWaylandContentPurposeV3());
     zwp_text_input_v3_commit(zwp_text_input_v3_);
   } else {
     if (native_window_) {
+      zwp_text_input_v1_set_content_type(zwp_text_input_v1_,
+                                         GetWaylandContentHintV1(),
+                                         GetWaylandContentPurposeV1());
       zwp_text_input_v1_show_input_panel(zwp_text_input_v1_);
       zwp_text_input_v1_activate(zwp_text_input_v1_,
                                  seat_inputs_map_.begin()->first,
                                  native_window_->Surface());
     }
   }
+}
+
+uint32_t ELinuxWindowWayland::GetWaylandContentPurposeV3() const {
+  const auto& type = input_type_info_.input_type;
+  if (input_type_info_.obscure_text) {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_PASSWORD;
+  }
+  if (type == "TextInputType.number") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_NUMBER;
+  } else if (type == "TextInputType.phone") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_PHONE;
+  } else if (type == "TextInputType.emailAddress") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_EMAIL;
+  } else if (type == "TextInputType.url") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_URL;
+  } else if (type == "TextInputType.datetime") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_DATETIME;
+  } else if (type == "TextInputType.name") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_NAME;
+  } else if (type == "TextInputType.visiblePassword") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_PASSWORD;
+  } else if (type == "TextInputType.streetAddress") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_NORMAL;
+  } else if (type == "TextInputType.none") {
+    return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_NORMAL;
+  }
+  return ZWP_TEXT_INPUT_V3_CONTENT_PURPOSE_NORMAL;
+}
+
+uint32_t ELinuxWindowWayland::GetWaylandContentHintV3() const {
+  uint32_t hints = ZWP_TEXT_INPUT_V3_CONTENT_HINT_NONE;
+
+  if (input_type_info_.obscure_text) {
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_HIDDEN_TEXT;
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_SENSITIVE_DATA;
+  }
+  if (input_type_info_.autocorrect) {
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_SPELLCHECK;
+  }
+  if (input_type_info_.enable_suggestions) {
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_COMPLETION;
+  }
+  if (input_type_info_.input_type == "TextInputType.multiline") {
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_MULTILINE;
+  }
+  const auto& cap = input_type_info_.text_capitalization;
+  if (cap == "TextCapitalization.characters") {
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_UPPERCASE;
+  } else if (cap == "TextCapitalization.words") {
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_TITLECASE;
+  } else if (cap == "TextCapitalization.sentences") {
+    hints |= ZWP_TEXT_INPUT_V3_CONTENT_HINT_AUTO_CAPITALIZATION;
+  }
+  return hints;
+}
+
+uint32_t ELinuxWindowWayland::GetWaylandContentPurposeV1() const {
+  const auto& type = input_type_info_.input_type;
+  if (input_type_info_.obscure_text) {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_PASSWORD;
+  }
+  if (type == "TextInputType.number") {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_NUMBER;
+  } else if (type == "TextInputType.phone") {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_PHONE;
+  } else if (type == "TextInputType.emailAddress") {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_EMAIL;
+  } else if (type == "TextInputType.url") {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_URL;
+  } else if (type == "TextInputType.datetime") {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_DATETIME;
+  } else if (type == "TextInputType.name") {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_NAME;
+  } else if (type == "TextInputType.visiblePassword") {
+    return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_PASSWORD;
+  }
+  return ZWP_TEXT_INPUT_V1_CONTENT_PURPOSE_NORMAL;
+}
+
+uint32_t ELinuxWindowWayland::GetWaylandContentHintV1() const {
+  uint32_t hints = ZWP_TEXT_INPUT_V1_CONTENT_HINT_NONE;
+
+  if (input_type_info_.obscure_text) {
+    hints |= ZWP_TEXT_INPUT_V1_CONTENT_HINT_PASSWORD;
+  }
+  if (input_type_info_.autocorrect) {
+    hints |= ZWP_TEXT_INPUT_V1_CONTENT_HINT_AUTO_CORRECTION;
+  }
+  if (input_type_info_.enable_suggestions) {
+    hints |= ZWP_TEXT_INPUT_V1_CONTENT_HINT_AUTO_COMPLETION;
+  }
+  if (input_type_info_.input_type == "TextInputType.multiline") {
+    hints |= ZWP_TEXT_INPUT_V1_CONTENT_HINT_MULTILINE;
+  }
+  const auto& cap = input_type_info_.text_capitalization;
+  if (cap == "TextCapitalization.characters") {
+    hints |= ZWP_TEXT_INPUT_V1_CONTENT_HINT_UPPERCASE;
+  } else if (cap == "TextCapitalization.words") {
+    hints |= ZWP_TEXT_INPUT_V1_CONTENT_HINT_TITLECASE;
+  } else if (cap == "TextCapitalization.sentences") {
+    hints |= ZWP_TEXT_INPUT_V1_CONTENT_HINT_AUTO_CAPITALIZATION;
+  }
+  return hints;
 }
 
 void ELinuxWindowWayland::DismissVirtualKeybaord() {

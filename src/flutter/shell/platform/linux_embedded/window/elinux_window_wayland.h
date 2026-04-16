@@ -82,7 +82,9 @@ class ELinuxWindowWayland : public ELinuxWindow, public WindowBindingHandler {
   void UpdateFlutterCursor(const std::string& cursor_name) override;
 
   // |FlutterWindowBindingHandler|
-  void UpdateVirtualKeyboardStatus(const bool show) override;
+  void UpdateVirtualKeyboardStatus(
+      const bool show,
+      const TextInputTypeInfo& input_type_info = TextInputTypeInfo()) override;
 
   // |FlutterWindowBindingHandler|
   std::string GetClipboardData() override;
@@ -111,6 +113,18 @@ class ELinuxWindowWayland : public ELinuxWindow, public WindowBindingHandler {
   void ShowVirtualKeyboard();
 
   void DismissVirtualKeybaord();
+
+  // Maps Flutter TextInputType to Wayland content purpose (v3).
+  uint32_t GetWaylandContentPurposeV3() const;
+
+  // Maps Flutter text input configuration to Wayland content hints (v3).
+  uint32_t GetWaylandContentHintV3() const;
+
+  // Maps Flutter TextInputType to Wayland content purpose (v1).
+  uint32_t GetWaylandContentPurposeV1() const;
+
+  // Maps Flutter text input configuration to Wayland content hints (v1).
+  uint32_t GetWaylandContentHintV1() const;
 
   // Updates the surface scale of the window from the list of entered outputs.
   void UpdateWindowScale();
@@ -164,6 +178,9 @@ class ELinuxWindowWayland : public ELinuxWindow, public WindowBindingHandler {
 
   // Indicates that exists a keyboard show request from Flutter Engine.
   bool is_requested_show_virtual_keyboard_;
+
+  // Current text input type info from Flutter.
+  TextInputTypeInfo input_type_info_;
 
   wl_display* wl_display_;
   wl_registry* wl_registry_;
