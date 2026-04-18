@@ -1866,25 +1866,26 @@ wl_cursor* ELinuxWindowWayland::GetWlCursor(const std::string& cursor_name,
 
 void ELinuxWindowWayland::ShowVirtualKeyboard() {
   if (zwp_text_input_v3_) {
-    // I'm not sure the reason, but enable needs to be called twice.
-    zwp_text_input_v3_enable(zwp_text_input_v3_);
-    zwp_text_input_v3_commit(zwp_text_input_v3_);
+    // First enable+commit to reset the state.
     zwp_text_input_v3_enable(zwp_text_input_v3_);
     zwp_text_input_v3_commit(zwp_text_input_v3_);
 
+    // Second enable with content_type set before commit, so the
+    // compositor sees both enable and content_type atomically.
+    zwp_text_input_v3_enable(zwp_text_input_v3_);
     zwp_text_input_v3_set_content_type(zwp_text_input_v3_,
                                        GetWaylandContentHintV3(),
                                        GetWaylandContentPurposeV3());
     zwp_text_input_v3_commit(zwp_text_input_v3_);
   } else {
     if (native_window_) {
-      zwp_text_input_v1_set_content_type(zwp_text_input_v1_,
-                                         GetWaylandContentHintV1(),
-                                         GetWaylandContentPurposeV1());
       zwp_text_input_v1_show_input_panel(zwp_text_input_v1_);
       zwp_text_input_v1_activate(zwp_text_input_v1_,
                                  seat_inputs_map_.begin()->first,
                                  native_window_->Surface());
+      zwp_text_input_v1_set_content_type(zwp_text_input_v1_,
+                                         GetWaylandContentHintV1(),
+                                         GetWaylandContentPurposeV1());
     }
   }
 }
