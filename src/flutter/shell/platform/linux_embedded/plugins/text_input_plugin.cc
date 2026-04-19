@@ -29,6 +29,8 @@ namespace {
 constexpr char kChannelName[] = "flutter/textinput";
 constexpr char kELinuxChannelName[] = "elinux/textinput";
 constexpr char kSetInputLocaleMethod[] = "setInputLocale";
+constexpr char kSetVirtualKeyboardBottomInsetMethod[] =
+    "setVirtualKeyboardBottomInset";
 
 constexpr char kSetEditingStateMethod[] = "TextInput.setEditingState";
 constexpr char kClearClientMethod[] = "TextInput.clearClient";
@@ -134,6 +136,28 @@ TextInputPlugin::TextInputPlugin(BinaryMessenger* messenger,
           } else {
             input_locale_.clear();
           }
+          result->Success();
+        } else if (method == kSetVirtualKeyboardBottomInsetMethod) {
+          if (!call.arguments()) {
+            result->Error(kBadArgumentError, "Missing argument");
+            return;
+          }
+          const auto& args = *call.arguments();
+          int64_t height = 0;
+          if (std::holds_alternative<int32_t>(args)) {
+            height = std::get<int32_t>(args);
+          } else if (std::holds_alternative<int64_t>(args)) {
+            height = std::get<int64_t>(args);
+          } else {
+            result->Error(kBadArgumentError,
+                          "Expected integer height in surface units");
+            return;
+          }
+          if (height < 0) {
+            result->Error(kBadArgumentError, "Height must be non-negative");
+            return;
+          }
+          delegate_->SetVirtualKeyboardBottomInset(static_cast<int32_t>(height));
           result->Success();
         } else {
           result->NotImplemented();

@@ -339,6 +339,8 @@ void FlutterELinuxView::SendWindowMetrics(size_t width_px,
   event.width = width_px;
   event.height = height_px;
   event.pixel_ratio = dpiScale;
+  event.physical_view_inset_bottom =
+      static_cast<double>(virtual_keyboard_bottom_inset_px_);
   engine_->SendWindowMetricsEvent(event);
 }
 
@@ -590,6 +592,17 @@ void FlutterELinuxView::UpdateDisplayInfo(double refresh_rate,
   };
   const size_t display_count = 1;
   engine_.get()->UpdateDisplayInfo(update_type, &displays, display_count);
+}
+
+void FlutterELinuxView::OnVirtualKeyboardInsetChanged(size_t bottom_px) {
+  if (virtual_keyboard_bottom_inset_px_ == bottom_px) {
+    return;
+  }
+  virtual_keyboard_bottom_inset_px_ = bottom_px;
+  
+  PhysicalWindowBounds bounds = binding_handler_->GetPhysicalWindowBounds();
+  SendWindowMetrics(bounds.width, bounds.height,
+                    binding_handler_->GetDpiScale());
 }
 
 }  // namespace flutter

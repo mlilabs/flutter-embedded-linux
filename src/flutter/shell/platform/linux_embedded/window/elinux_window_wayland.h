@@ -87,6 +87,9 @@ class ELinuxWindowWayland : public ELinuxWindow, public WindowBindingHandler {
       const TextInputTypeInfo& input_type_info = TextInputTypeInfo()) override;
 
   // |FlutterWindowBindingHandler|
+  void SetVirtualKeyboardBottomInset(int32_t height_surface_units) override;
+
+  // |FlutterWindowBindingHandler|
   std::string GetClipboardData() override;
 
   // |FlutterWindowBindingHandler|
@@ -113,6 +116,11 @@ class ELinuxWindowWayland : public ELinuxWindow, public WindowBindingHandler {
   void ShowVirtualKeyboard();
 
   void DismissVirtualKeybaord();
+
+  // Notifies the view/engine of the current on-screen keyboard inset.
+  // Converts the cached surface-unit height to physical pixels using the
+  // current buffer scale. Sends 0 when the keyboard is not visible.
+  void NotifyVirtualKeyboardInset();
 
   // Maps Flutter TextInputType to Wayland content purpose (v3).
   uint32_t GetWaylandContentPurposeV3() const;
@@ -178,6 +186,17 @@ class ELinuxWindowWayland : public ELinuxWindow, public WindowBindingHandler {
 
   // Indicates that exists a keyboard show request from Flutter Engine.
   bool is_requested_show_virtual_keyboard_;
+
+  // Whether the on-screen keyboard is currently considered visible. Tracked
+  // locally based on our own show/dismiss requests and zwp_text_input_v3
+  // enter/leave events (v3 has no panel-visibility event).
+  bool virtual_keyboard_visible_ = false;
+
+  // Height (in Wayland surface units / logical pixels) that the on-screen
+  // keyboard occupies at the bottom of the window when visible. Provided by
+  // the Flutter app via the elinux/textinput channel
+  // (setVirtualKeyboardBottomInset). 0 disables the inset.
+  int32_t virtual_keyboard_bottom_inset_surface_ = 0;
 
   // Current text input type info from Flutter.
   TextInputTypeInfo input_type_info_;

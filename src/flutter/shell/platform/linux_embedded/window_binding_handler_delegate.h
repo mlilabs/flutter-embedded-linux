@@ -120,6 +120,12 @@ class WindowBindingHandlerDelegate {
                                  size_t width_px,
                                  size_t height_px,
                                  double pixel_ratio) = 0;
+
+  // Notifies the delegate that the on-screen keyboard occlusion at the
+  // bottom of the window has changed.
+  // @param[in] bottom_px  Physical pixels occluded by the on-screen
+  //                       keyboard at the bottom of the window.
+  virtual void OnVirtualKeyboardInsetChanged(size_t bottom_px) {}
 };
 
 }  // namespace flutter

@@ -157,6 +157,9 @@ class FlutterELinuxView : public WindowBindingHandlerDelegate {
                          size_t height_px,
                          double pixel_ratio) override;
 
+  // |WindowBindingHandlerDelegate|
+  void OnVirtualKeyboardInsetChanged(size_t bottom_px) override;
+
  private:
   // Struct holding the mouse state. The engine doesn't keep track of which
   // mouse buttons have been pressed, so it's the embedding's responsibility.
@@ -318,6 +321,10 @@ class FlutterELinuxView : public WindowBindingHandlerDelegate {
   // Current view rotation (FlutterTransformation).
   FlutterTransformation view_rotation_transformation_ = {
       1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+
+  // Physical pixels occluded by the on-screen keyboard at the bottom of
+  // the window.
+  size_t virtual_keyboard_bottom_inset_px_ = 0;
 } SWIFT_UNSAFE_REFERENCE;
 
 }  // namespace flutter
