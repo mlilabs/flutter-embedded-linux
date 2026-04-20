@@ -3,6 +3,7 @@
 ENGINE_VERSION=cb4b5fff73
 
 set -e
+cd -- "$( dirname -- "${BASH_SOURCE[0]}" )"
 
 # Download Flutter engine
 mkdir -p engine/$ENGINE_VERSION/arm64
