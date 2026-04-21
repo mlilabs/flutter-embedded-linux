@@ -345,8 +345,9 @@ const wl_pointer_listener ELinuxWindowWayland::kWlPointerListener = {
       }
 
       if (self->binding_handler_delegate_) {
-        double x_px = wl_fixed_to_double(surface_x) * self->current_scale_;
-        double y_px = wl_fixed_to_double(surface_y) * self->current_scale_;
+        const int32_t buffer_scale = self->WlBufferScale();
+        double x_px = wl_fixed_to_double(surface_x) * buffer_scale;
+        double y_px = wl_fixed_to_double(surface_y) * buffer_scale;
         self->binding_handler_delegate_->OnPointerMove(x_px, y_px);
         self->pointer_x_ = x_px;
         self->pointer_y_ = y_px;
@@ -388,8 +389,9 @@ const wl_pointer_listener ELinuxWindowWayland::kWlPointerListener = {
 
       auto self = reinterpret_cast<ELinuxWindowWayland*>(data);
       if (self->binding_handler_delegate_) {
-        double x_px = wl_fixed_to_double(surface_x) * self->current_scale_;
-        double y_px = wl_fixed_to_double(surface_y) * self->current_scale_;
+        const int32_t buffer_scale = self->WlBufferScale();
+        double x_px = wl_fixed_to_double(surface_x) * buffer_scale;
+        double y_px = wl_fixed_to_double(surface_y) * buffer_scale;
         self->binding_handler_delegate_->OnPointerMove(x_px, y_px);
         self->pointer_x_ = x_px;
         self->pointer_y_ = y_px;
@@ -1408,7 +1410,7 @@ bool ELinuxWindowWayland::CreateRenderSurface(int32_t width_px,
     xdg_toplevel_set_app_id(xdg_toplevel_, view_properties_.app_id);
   }
   xdg_toplevel_add_listener(xdg_toplevel_, &kXdgToplevelListener, this);
-  wl_surface_set_buffer_scale(native_window_->Surface(), current_scale_);
+  wl_surface_set_buffer_scale(native_window_->Surface(), WlBufferScale());
 
   {
     auto* callback = wl_surface_frame(native_window_->Surface());
@@ -1584,7 +1586,7 @@ void ELinuxWindowWayland::UpdateFlutterCursor(const std::string& cursor_name) {
           image->hotspot_x / current_scale_, image->hotspot_y / current_scale_);
       wl_surface_attach(wl_cursor_surface_, buffer, 0, 0);
       wl_surface_damage(wl_cursor_surface_, 0, 0, image->width, image->height);
-      wl_surface_set_buffer_scale(wl_cursor_surface_, current_scale_);
+      wl_surface_set_buffer_scale(wl_cursor_surface_, WlBufferScale());
       wl_surface_commit(wl_cursor_surface_);
     }
   }
@@ -2103,7 +2105,7 @@ void ELinuxWindowWayland::UpdateWindowScale() {
   ELINUX_LOG(TRACE) << "Window scale has changed: " << scale_factor;
   current_scale_ = scale_factor;
 
-  wl_surface_set_buffer_scale(native_window_->Surface(), current_scale_);
+  wl_surface_set_buffer_scale(native_window_->Surface(), WlBufferScale());
   request_redraw_ = true;
 }
 
@@ -2113,6 +2115,16 @@ uint32_t ELinuxWindowWayland::WindowDecorationsPhysicalHeight() const {
   }
 
   return window_decorations_->Height() * current_scale_;
+}
+
+int32_t ELinuxWindowWayland::WlBufferScale() const {
+  // With force_scale_factor, current_scale_ is a Flutter DPR (potentially
+  // fractional) that the engine applies internally. It must not be forwarded
+  // to Wayland as a buffer scale, so we keep the Wayland buffer scale at 1.
+  if (view_properties_.force_scale_factor) {
+    return 1;
+  }
+  return static_cast<int32_t>(current_scale_);
 }
 
 }  // namespace flutter

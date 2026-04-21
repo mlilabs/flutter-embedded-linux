@@ -152,6 +152,14 @@ class ELinuxWindowWayland : public ELinuxWindow, public WindowBindingHandler {
   // Get window decorations height in physical pixels.
   uint32_t WindowDecorationsPhysicalHeight() const;
 
+  // The integer buffer scale that is actually applied to the Wayland surface
+  // via wl_surface.set_buffer_scale. When |force_scale_factor| is enabled the
+  // forced factor is a Flutter device pixel ratio, not a Wayland buffer scale,
+  // so the buffer scale stays at 1 regardless of its value. In auto-scale
+  // mode it equals |current_scale_| which is already an integer announced by
+  // the compositor.
+  int32_t WlBufferScale() const;
+
   static const wl_registry_listener kWlRegistryListener;
   static const xdg_wm_base_listener kXdgWmBaseListener;
   static const xdg_surface_listener kXdgSurfaceListener;
